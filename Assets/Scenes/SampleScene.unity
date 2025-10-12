@@ -542,7 +542,8 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
-  jumpKey: 32
+  jumpKey: 273
+  altJumpKey: 119
 --- !u!95 &1316838450
 Animator:
   serializedVersion: 7

@@ -31,7 +31,9 @@ public class PlayerController2D : MonoBehaviour
     public LayerMask groundLayer;
 
     [Header("Controles")]
-    public KeyCode jumpKey = KeyCode.Space;
+    public KeyCode jumpKey = KeyCode.UpArrow;
+    public KeyCode altJumpKey = KeyCode.W;
+    
 
     Rigidbody2D rb;
     Collider2D col;
@@ -99,11 +101,10 @@ public class PlayerController2D : MonoBehaviour
 
     void HandleJump()
     {
-        if (Input.GetKeyDown(jumpKey))
+        if (Input.GetKeyDown(jumpKey) || Input.GetKeyDown(altJumpKey))
             jumpBufferCounter = jumpBufferTime;
         else
             jumpBufferCounter -= Time.deltaTime;
-
         if (IsGrounded())
         {
             coyoteCounter = coyoteTime;
