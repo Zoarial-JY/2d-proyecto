@@ -520,6 +520,11 @@ MonoBehaviour:
   jumpBufferTime: 0.12
   fallGravityMultiplier: 2
   lowJumpMultiplier: 2.5
+  bulletPrefab: {fileID: 6928698682141405652, guid: 537b474c4b2feb24e8d90ac66bd2470c, type: 3}
+  firePoint: {fileID: 1316838446}
+  shootKey: 107
+  bulletSpeed: 12
+  fireRate: 0.3
   groundLayer:
     serializedVersion: 2
     m_Bits: 8

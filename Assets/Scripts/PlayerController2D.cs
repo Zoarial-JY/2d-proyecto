@@ -3,7 +3,6 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Animator))]
-
 public class PlayerController2D : MonoBehaviour
 {
     [Header("Movimiento")]
@@ -14,19 +13,26 @@ public class PlayerController2D : MonoBehaviour
 
     [Header("Salto")]
     public float jumpForce = 14f;
-    public int extraAirJumps = 0;        // pon 1 para doble salto
-    public float coyoteTime = 0.10f;     // tiempo de perdón al borde
-    public float jumpBufferTime = 0.12f; // buffer de pulsación previa
+    public int extraAirJumps = 0;
+    public float coyoteTime = 0.10f;
+    public float jumpBufferTime = 0.12f;
     public float fallGravityMultiplier = 2f;
     public float lowJumpMultiplier = 2.5f;
 
+    [Header("Disparo")] // 👈 NUEVO
+    public GameObject bulletPrefab;   // asigna el prefab Bullet
+    public Transform firePoint;       // asigna el FirePoint
+    public KeyCode shootKey = KeyCode.K;
+    public float bulletSpeed = 12f;
+    public float fireRate = 0.3f;     // tiempo entre disparos
+    private float nextShootTime = 0f;
+
     [Header("Detección de suelo")]
-    public LayerMask groundLayer;        // asigna la capa "Ground" en el Inspector
+    public LayerMask groundLayer;
 
     [Header("Controles")]
     public KeyCode jumpKey = KeyCode.Space;
 
-    // ---
     Rigidbody2D rb;
     Collider2D col;
     Animator animator;
@@ -42,62 +48,40 @@ public class PlayerController2D : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
+        animator = GetComponent<Animator>();
         airJumpsLeft = extraAirJumps;
-        animator = GetComponent<Animator>(); 
     }
 
     void Update()
     {
         inputX = Input.GetAxisRaw("Horizontal");
 
-        // 👉 Actualizamos parámetro "Running" del Animator
+        // --- Animaciones ---
         bool isRunning = Mathf.Abs(inputX) > 0.1f && IsGrounded();
         animator.SetBool("Running", isRunning);
 
-        // --- NUEVO: animación de salto (Jumping)
-        bool isJumping = !IsGrounded();         // cuando el personaje no está tocando el suelo
-        animator.SetBool("Jumping", isJumping); // activa o desactiva el parámetro Jumping
+        bool isJumping = !IsGrounded();
+        animator.SetBool("Jumping", isJumping);
 
-        // Buffer de salto
-        if (Input.GetKeyDown(jumpKey))
-            jumpBufferCounter = jumpBufferTime;
-        else
-            jumpBufferCounter -= Time.deltaTime;
+        // --- Movimiento / Salto ---
+        HandleJump();
+        FlipSprite();
 
-        // Coyote time + recarga saltos aéreos
-        if (IsGrounded())
-        {
-            coyoteCounter = coyoteTime;
-            airJumpsLeft = extraAirJumps;
-        }
-        else
-        {
-            coyoteCounter -= Time.deltaTime;
-        }
-
-        // Ejecutar salto si hay buffer disponible
-        if (jumpBufferCounter > 0f)
-        {
-            if (coyoteCounter > 0f)              // salto desde suelo (incluye coyote)
-            {
-                DoJump();
-            }
-            else if (airJumpsLeft > 0)           // saltos aéreos (doble salto, etc.)
-            {
-                DoJump();
-                airJumpsLeft--;
-            }
-            jumpBufferCounter = 0f;
-        }
-
-        // Voltear sprite
-        if (inputX > 0 && !isFacingRight) Flip();
-        else if (inputX < 0 && isFacingRight) Flip();
+        // --- NUEVO: Disparo ---
+        HandleShooting();
     }
 
     void FixedUpdate()
     {
-        // Aceleración/desaceleración suave
+        HandleMovement();
+    }
+
+    // ----------------------------
+    // 🧠 FUNCIONES DE MOVIMIENTO
+    // ----------------------------
+
+    void HandleMovement()
+    {
         float targetSpeed = inputX * moveSpeed;
         float speedDiff = targetSpeed - rb.linearVelocity.x;
         float accelRate = (Mathf.Abs(targetSpeed) > 0.01f) ? acceleration : deceleration;
@@ -113,23 +97,52 @@ public class PlayerController2D : MonoBehaviour
             rb.gravityScale = 1f;
     }
 
-    bool IsGrounded()
+    void HandleJump()
     {
-        // Usa el propio collider del Player para saber si toca la capa Ground
-        return col.IsTouchingLayers(groundLayer);
+        if (Input.GetKeyDown(jumpKey))
+            jumpBufferCounter = jumpBufferTime;
+        else
+            jumpBufferCounter -= Time.deltaTime;
+
+        if (IsGrounded())
+        {
+            coyoteCounter = coyoteTime;
+            airJumpsLeft = extraAirJumps;
+        }
+        else
+        {
+            coyoteCounter -= Time.deltaTime;
+        }
+
+        if (jumpBufferCounter > 0f)
+        {
+            if (coyoteCounter > 0f)
+            {
+                DoJump();
+            }
+            else if (airJumpsLeft > 0)
+            {
+                DoJump();
+                airJumpsLeft--;
+            }
+            jumpBufferCounter = 0f;
+        }
     }
 
     void DoJump()
     {
-        // reset y aplica impulso vertical consistente
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         coyoteCounter = 0f;
 
-        animator.SetBool("Running", false); 
-        animator.SetBool("Jumping", true);  // 👈 activa la animación de salto al presionar Space
+        animator.SetBool("Running", false);
+        animator.SetBool("Jumping", true);
+    }
 
-
+    void FlipSprite()
+    {
+        if (inputX > 0 && !isFacingRight) Flip();
+        else if (inputX < 0 && isFacingRight) Flip();
     }
 
     void Flip()
@@ -138,5 +151,55 @@ public class PlayerController2D : MonoBehaviour
         Vector3 s = transform.localScale;
         s.x *= -1f;
         transform.localScale = s;
+    }
+
+    bool IsGrounded()
+    {
+        return col.IsTouchingLayers(groundLayer);
+    }
+
+    // ----------------------------
+    // 💥 FUNCIONES DE DISPARO
+    // ----------------------------
+
+    void HandleShooting()
+    {
+        if (Input.GetKeyDown(shootKey) && Time.time >= nextShootTime)
+        {
+            nextShootTime = Time.time + fireRate;
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        if (bulletPrefab == null || firePoint == null) return;
+
+        // Dirección según el Player (mirando a derecha o izquierda)
+        float dirX = Mathf.Sign(transform.localScale.x);
+        Vector2 dir = new Vector2(dirX, 0f);
+
+        // Instancia la bala en FirePoint
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+
+        // Si el prefab tiene BulletScript, le pasamos la dirección
+        BulletScript bulletScript = bullet.GetComponent<BulletScript>();
+        if (bulletScript != null)
+        {
+            bulletScript.SetDirection(dir);
+        }
+        else
+        {
+        // Si no, aplicamos la velocidad directamente (respaldo)
+        Rigidbody2D rbBullet = bullet.GetComponent<Rigidbody2D>();
+        if (rbBullet != null)
+        {
+            rbBullet.gravityScale = 0;
+            rbBullet.linearVelocity = dir * bulletSpeed;
+        }
+}
+
+        // Opcional: destruir bala después de un tiempo
+        Destroy(bullet, 3f);
     }
 }
