@@ -116,7 +116,7 @@ public class PlayerController2D : MonoBehaviour
         }
 
         if (jumpBufferCounter > 0f)
-        {
+        {  
             if (coyoteCounter > 0f)
             {
                 DoJump();
