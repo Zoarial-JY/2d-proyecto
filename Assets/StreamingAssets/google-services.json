@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "431901433933",
+    "project_id": "d-proyecto-377d9",
+    "storage_bucket": "d-proyecto-377d9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431901433933:android:b01603c636529a35953c04",
+        "android_client_info": {
+          "package_name": "com.yael.juego2d"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZRTGDbdPntT6CuJnGtY8thKCpAZmvsz8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
