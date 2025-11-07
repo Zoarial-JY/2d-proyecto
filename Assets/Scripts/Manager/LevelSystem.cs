@@ -102,7 +102,9 @@ public class LevelSystem : MonoBehaviour
     {
         if (levelText != null) levelText.text = $"Nivel: {level}";
         if (coinText != null)  coinText.text  = $"Monedas: {playerCoins.coins}/{coinsPerLevel}";
+
     }
+    
 
     public void ResetProgress()
     {
